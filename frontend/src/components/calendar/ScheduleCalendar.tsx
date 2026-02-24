@@ -9,11 +9,16 @@ interface Props {
   schedule: ScheduleDetail;
 }
 
-const shiftColors: Record<string, string> = {
-  Matin: "bg-amber-200 text-amber-800",
-  "Après-midi": "bg-blue-200 text-blue-800",
-  Nuit: "bg-indigo-300 text-indigo-900",
-};
+const SHIFT_COLOR_PALETTE = [
+  "bg-amber-200 text-amber-800",
+  "bg-blue-200 text-blue-800",
+  "bg-indigo-300 text-indigo-900",
+  "bg-emerald-200 text-emerald-800",
+  "bg-rose-200 text-rose-800",
+  "bg-violet-200 text-violet-800",
+  "bg-cyan-200 text-cyan-800",
+  "bg-orange-200 text-orange-800",
+];
 
 export default function ScheduleCalendar({ schedule }: Props) {
   const days = useMemo(
@@ -24,6 +29,27 @@ export default function ScheduleCalendar({ schedule }: Props) {
       }),
     [schedule.period_start, schedule.period_end]
   );
+
+  // Build dynamic color map + label map from shift data in assignments
+  const { shiftColors, shiftLabels } = useMemo(() => {
+    const nameSet = new Set<string>();
+    const labels: Record<string, string> = {};
+    for (const a of schedule.assignments) {
+      const name = a.shift_types?.name;
+      if (name) {
+        nameSet.add(name);
+        if (!labels[name]) {
+          labels[name] = a.shift_types?.short_label || name.charAt(0);
+        }
+      }
+    }
+    const colors: Record<string, string> = {};
+    const sorted = [...nameSet].sort();
+    sorted.forEach((name, i) => {
+      colors[name] = SHIFT_COLOR_PALETTE[i % SHIFT_COLOR_PALETTE.length];
+    });
+    return { shiftColors: colors, shiftLabels: labels };
+  }, [schedule.assignments]);
 
   // Group assignments by employee
   const employeeList = useMemo(() => {
@@ -110,6 +136,7 @@ export default function ScheduleCalendar({ schedule }: Props) {
                   const dateStr = format(day, "yyyy-MM-dd");
                   const assignment = emp.assignments[dateStr];
                   const shiftName = assignment?.shift_types?.name || "";
+                  const shiftLabel = assignment?.shift_types?.short_label || shiftName.charAt(0);
                   return (
                     <td
                       key={dateStr}
@@ -123,7 +150,7 @@ export default function ScheduleCalendar({ schedule }: Props) {
                             shiftColors[shiftName] || "bg-gray-200 text-gray-700"
                           } ${assignment.is_locked ? "ring-2 ring-red-400" : ""}`}
                         >
-                          {shiftName.charAt(0)}
+                          {shiftLabel}
                         </span>
                       ) : (
                         <span className="text-gray-300">·</span>
@@ -142,8 +169,8 @@ export default function ScheduleCalendar({ schedule }: Props) {
         <span className="font-medium">Légende :</span>
         {Object.entries(shiftColors).map(([name, cls]) => (
           <span key={name} className="flex items-center gap-1">
-            <span className={`inline-block w-4 h-4 rounded ${cls}`}>
-              {name.charAt(0)}
+            <span className={`inline-block w-4 h-4 rounded text-center text-[9px] leading-4 ${cls}`}>
+              {shiftLabels[name] || name.charAt(0)}
             </span>
             {name}
           </span>

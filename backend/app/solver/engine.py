@@ -13,14 +13,12 @@ from app.solver.constraints import (
     add_rest_between_shifts,
     add_max_weekly_hours,
     add_absence_constraints,
-    add_night_capability,
-    add_weekend_capability,
+    add_working_days_constraint,
     add_weekend_rest,
     add_locked_assignments,
 )
 from app.solver.objectives import (
     add_shift_regularity_objective,
-    add_preference_objective,
     add_night_weekend_equity_objective,
 )
 
@@ -33,9 +31,7 @@ def _parse_employees(raw: list) -> list[Employee]:
             last_name=e["last_name"],
             role=e["role"],
             activity_rate=e["activity_rate"],
-            can_do_night=e["can_do_night"],
-            can_do_weekend=e["can_do_weekend"],
-            preferred_shifts=e.get("preferred_shifts") or [],
+            working_days=e.get("working_days") or ["lundi", "mardi", "mercredi", "jeudi", "vendredi"],
         )
         for e in raw
     ]
@@ -59,8 +55,9 @@ def _parse_coverage(raw: list) -> list[CoverageRequirement]:
         CoverageRequirement(
             shift_type_id=c["shift_type_id"],
             day_type=c["day_type"],
-            min_employees=c["min_employees"],
-            required_roles=c.get("required_roles") or [],
+            min_infirmier=c.get("min_infirmier", 0),
+            min_assc=c.get("min_assc", 0),
+            min_aide_soignant=c.get("min_aide_soignant", 0),
         )
         for c in raw
     ]
@@ -153,8 +150,7 @@ def solve_schedule(
 
     add_max_weekly_hours(model, shifts_var, emps, shifts, days)
     add_absence_constraints(model, shifts_var, emps, shifts, days, abs_list)
-    add_night_capability(model, shifts_var, emps, shifts, days)
-    add_weekend_capability(model, shifts_var, emps, shifts, days)
+    add_working_days_constraint(model, shifts_var, emps, shifts, days)
 
     min_free_we = rule_params.get("weekend_rest", {}).get("min_free_weekends_per_2weeks", 1)
     add_weekend_rest(model, shifts_var, emps, shifts, days, min_free_we)
@@ -171,13 +167,6 @@ def solve_schedule(
     )
     for v in reg_vars:
         objective_terms.append(v * reg_w)
-
-    pref_weight = rule_params.get("respect_preferences", {}).get("weight", 5)
-    pref_vars, pref_w = add_preference_objective(
-        model, shifts_var, emps, shifts, days, pref_weight
-    )
-    for v in pref_vars:
-        objective_terms.append(v * pref_w)
 
     eq_vars, eq_w = add_night_weekend_equity_objective(
         model, shifts_var, emps, shifts, days,

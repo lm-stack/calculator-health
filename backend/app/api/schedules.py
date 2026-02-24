@@ -33,7 +33,7 @@ def get_schedule(schedule_id: str):
 
     assignments = (
         sb.table("schedule_assignments")
-        .select("*, employees(first_name, last_name, role), shift_types(name, start_time, end_time)")
+        .select("*, employees(first_name, last_name, role), shift_types(name, start_time, end_time, short_label)")
         .eq("schedule_id", schedule_id)
         .order("date,employee_id")
         .execute()

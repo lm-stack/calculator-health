@@ -1,9 +1,12 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator, model_validator
 from typing import Optional
 from app.db.supabase_client import get_supabase
 
 router = APIRouter()
+
+VALID_DAYS = {"lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"}
+VALID_RATES = {20, 40, 60, 80, 100}
 
 
 class EmployeeCreate(BaseModel):
@@ -11,9 +14,32 @@ class EmployeeCreate(BaseModel):
     last_name: str
     role: str  # infirmier, assc, aide-soignant
     activity_rate: int = 100
-    can_do_night: bool = True
-    can_do_weekend: bool = True
-    preferred_shifts: list = []
+    working_days: list[str] = ["lundi", "mardi", "mercredi", "jeudi", "vendredi"]
+
+    @field_validator("activity_rate")
+    @classmethod
+    def validate_rate(cls, v: int) -> int:
+        if v not in VALID_RATES:
+            raise ValueError(f"Taux invalide : {v}. Valeurs acceptées : {sorted(VALID_RATES)}")
+        return v
+
+    @field_validator("working_days")
+    @classmethod
+    def validate_days(cls, v: list[str]) -> list[str]:
+        invalid = set(v) - VALID_DAYS
+        if invalid:
+            raise ValueError(f"Jours invalides : {invalid}")
+        return v
+
+    @model_validator(mode="after")
+    def validate_days_count(self):
+        expected = self.activity_rate // 20
+        if len(self.working_days) != expected:
+            raise ValueError(
+                f"Taux {self.activity_rate}% → {expected} jours attendus, "
+                f"mais {len(self.working_days)} fournis"
+            )
+        return self
 
 
 class EmployeeUpdate(BaseModel):
@@ -21,9 +47,34 @@ class EmployeeUpdate(BaseModel):
     last_name: Optional[str] = None
     role: Optional[str] = None
     activity_rate: Optional[int] = None
-    can_do_night: Optional[bool] = None
-    can_do_weekend: Optional[bool] = None
-    preferred_shifts: Optional[list] = None
+    working_days: Optional[list[str]] = None
+
+    @field_validator("activity_rate")
+    @classmethod
+    def validate_rate(cls, v: int | None) -> int | None:
+        if v is not None and v not in VALID_RATES:
+            raise ValueError(f"Taux invalide : {v}. Valeurs acceptées : {sorted(VALID_RATES)}")
+        return v
+
+    @field_validator("working_days")
+    @classmethod
+    def validate_days(cls, v: list[str] | None) -> list[str] | None:
+        if v is not None:
+            invalid = set(v) - VALID_DAYS
+            if invalid:
+                raise ValueError(f"Jours invalides : {invalid}")
+        return v
+
+    @model_validator(mode="after")
+    def validate_days_count(self):
+        if self.activity_rate is not None and self.working_days is not None:
+            expected = self.activity_rate // 20
+            if len(self.working_days) != expected:
+                raise ValueError(
+                    f"Taux {self.activity_rate}% → {expected} jours attendus, "
+                    f"mais {len(self.working_days)} fournis"
+                )
+        return self
 
 
 @router.get("")

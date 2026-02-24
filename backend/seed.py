@@ -20,11 +20,13 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 
 sb = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+WEEKDAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi"]
+
 # === Shift types ===
 print("Seeding shift types...")
 shift_types = [
     {"name": "Matin", "start_time": "06:30", "end_time": "14:30", "duration_hours": 8.0},
-    {"name": "Après-midi", "start_time": "14:00", "end_time": "22:00", "duration_hours": 8.0},
+    {"name": "Apres-midi", "start_time": "14:00", "end_time": "22:00", "duration_hours": 8.0},
     {"name": "Nuit", "start_time": "21:30", "end_time": "06:30", "duration_hours": 9.0},
 ]
 
@@ -39,36 +41,37 @@ shift_map = {s["name"]: s["id"] for s in shifts_data}
 print(f"  -> {len(shift_map)} shift types")
 
 # === Employees ===
+# Rule: nb jours = taux / 20, all weekdays only (no weekend)
 print("Seeding employees...")
 employees_data = [
     # Infirmiers (10)
-    {"first_name": "Marie", "last_name": "Dupont", "role": "infirmier", "activity_rate": 100, "can_do_night": True, "can_do_weekend": True, "preferred_shifts": ["Matin"]},
-    {"first_name": "Jean", "last_name": "Martin", "role": "infirmier", "activity_rate": 100, "can_do_night": True, "can_do_weekend": True, "preferred_shifts": ["Après-midi"]},
-    {"first_name": "Sophie", "last_name": "Bernard", "role": "infirmier", "activity_rate": 80, "can_do_night": True, "can_do_weekend": True, "preferred_shifts": ["Matin"]},
-    {"first_name": "Pierre", "last_name": "Robert", "role": "infirmier", "activity_rate": 100, "can_do_night": True, "can_do_weekend": False, "preferred_shifts": ["Matin"]},
-    {"first_name": "Claire", "last_name": "Petit", "role": "infirmier", "activity_rate": 100, "can_do_night": False, "can_do_weekend": True, "preferred_shifts": ["Matin"]},
-    {"first_name": "Lucas", "last_name": "Moreau", "role": "infirmier", "activity_rate": 60, "can_do_night": True, "can_do_weekend": True, "preferred_shifts": ["Nuit"]},
-    {"first_name": "Emma", "last_name": "Leroy", "role": "infirmier", "activity_rate": 100, "can_do_night": True, "can_do_weekend": True, "preferred_shifts": []},
-    {"first_name": "Thomas", "last_name": "Roux", "role": "infirmier", "activity_rate": 100, "can_do_night": True, "can_do_weekend": True, "preferred_shifts": ["Après-midi"]},
-    {"first_name": "Julie", "last_name": "David", "role": "infirmier", "activity_rate": 80, "can_do_night": False, "can_do_weekend": True, "preferred_shifts": ["Matin"]},
-    {"first_name": "Antoine", "last_name": "Bertrand", "role": "infirmier", "activity_rate": 100, "can_do_night": True, "can_do_weekend": True, "preferred_shifts": []},
+    {"first_name": "Marie", "last_name": "Dupont", "role": "infirmier", "activity_rate": 100, "working_days": WEEKDAYS[:5]},
+    {"first_name": "Jean", "last_name": "Martin", "role": "infirmier", "activity_rate": 100, "working_days": WEEKDAYS[:5]},
+    {"first_name": "Sophie", "last_name": "Bernard", "role": "infirmier", "activity_rate": 80, "working_days": WEEKDAYS[:4]},
+    {"first_name": "Pierre", "last_name": "Robert", "role": "infirmier", "activity_rate": 100, "working_days": WEEKDAYS[:5]},
+    {"first_name": "Claire", "last_name": "Petit", "role": "infirmier", "activity_rate": 60, "working_days": ["lundi", "mercredi", "vendredi"]},
+    {"first_name": "Lucas", "last_name": "Moreau", "role": "infirmier", "activity_rate": 40, "working_days": ["lundi", "jeudi"]},
+    {"first_name": "Emma", "last_name": "Leroy", "role": "infirmier", "activity_rate": 100, "working_days": WEEKDAYS[:5]},
+    {"first_name": "Thomas", "last_name": "Roux", "role": "infirmier", "activity_rate": 80, "working_days": WEEKDAYS[:4]},
+    {"first_name": "Julie", "last_name": "David", "role": "infirmier", "activity_rate": 60, "working_days": ["mardi", "mercredi", "jeudi"]},
+    {"first_name": "Antoine", "last_name": "Bertrand", "role": "infirmier", "activity_rate": 100, "working_days": WEEKDAYS[:5]},
     # ASSC (9)
-    {"first_name": "Léa", "last_name": "Garcia", "role": "assc", "activity_rate": 100, "can_do_night": True, "can_do_weekend": True, "preferred_shifts": ["Matin"]},
-    {"first_name": "Hugo", "last_name": "Martinez", "role": "assc", "activity_rate": 100, "can_do_night": True, "can_do_weekend": True, "preferred_shifts": []},
-    {"first_name": "Camille", "last_name": "Lopez", "role": "assc", "activity_rate": 80, "can_do_night": True, "can_do_weekend": False, "preferred_shifts": ["Matin"]},
-    {"first_name": "Nathan", "last_name": "Gonzalez", "role": "assc", "activity_rate": 100, "can_do_night": True, "can_do_weekend": True, "preferred_shifts": ["Après-midi"]},
-    {"first_name": "Manon", "last_name": "Wilson", "role": "assc", "activity_rate": 100, "can_do_night": False, "can_do_weekend": True, "preferred_shifts": ["Matin"]},
-    {"first_name": "Louis", "last_name": "Anderson", "role": "assc", "activity_rate": 100, "can_do_night": True, "can_do_weekend": True, "preferred_shifts": ["Nuit"]},
-    {"first_name": "Jade", "last_name": "Thomas", "role": "assc", "activity_rate": 60, "can_do_night": True, "can_do_weekend": True, "preferred_shifts": []},
-    {"first_name": "Raphaël", "last_name": "Taylor", "role": "assc", "activity_rate": 100, "can_do_night": True, "can_do_weekend": True, "preferred_shifts": ["Après-midi"]},
-    {"first_name": "Chloé", "last_name": "Moore", "role": "assc", "activity_rate": 80, "can_do_night": False, "can_do_weekend": True, "preferred_shifts": ["Matin"]},
+    {"first_name": "Lea", "last_name": "Garcia", "role": "assc", "activity_rate": 100, "working_days": WEEKDAYS[:5]},
+    {"first_name": "Hugo", "last_name": "Martinez", "role": "assc", "activity_rate": 80, "working_days": WEEKDAYS[:4]},
+    {"first_name": "Camille", "last_name": "Lopez", "role": "assc", "activity_rate": 60, "working_days": ["lundi", "mercredi", "vendredi"]},
+    {"first_name": "Nathan", "last_name": "Gonzalez", "role": "assc", "activity_rate": 100, "working_days": WEEKDAYS[:5]},
+    {"first_name": "Manon", "last_name": "Wilson", "role": "assc", "activity_rate": 100, "working_days": WEEKDAYS[:5]},
+    {"first_name": "Louis", "last_name": "Anderson", "role": "assc", "activity_rate": 20, "working_days": ["mercredi"]},
+    {"first_name": "Jade", "last_name": "Thomas", "role": "assc", "activity_rate": 40, "working_days": ["mardi", "jeudi"]},
+    {"first_name": "Raphael", "last_name": "Taylor", "role": "assc", "activity_rate": 100, "working_days": WEEKDAYS[:5]},
+    {"first_name": "Chloe", "last_name": "Moore", "role": "assc", "activity_rate": 80, "working_days": WEEKDAYS[:4]},
     # Aides-soignants (6)
-    {"first_name": "Gabriel", "last_name": "Jackson", "role": "aide-soignant", "activity_rate": 100, "can_do_night": True, "can_do_weekend": True, "preferred_shifts": []},
-    {"first_name": "Inès", "last_name": "White", "role": "aide-soignant", "activity_rate": 100, "can_do_night": True, "can_do_weekend": True, "preferred_shifts": ["Matin"]},
-    {"first_name": "Arthur", "last_name": "Harris", "role": "aide-soignant", "activity_rate": 80, "can_do_night": False, "can_do_weekend": True, "preferred_shifts": ["Après-midi"]},
-    {"first_name": "Lina", "last_name": "Clark", "role": "aide-soignant", "activity_rate": 100, "can_do_night": True, "can_do_weekend": False, "preferred_shifts": ["Matin"]},
-    {"first_name": "Adam", "last_name": "Lewis", "role": "aide-soignant", "activity_rate": 100, "can_do_night": True, "can_do_weekend": True, "preferred_shifts": []},
-    {"first_name": "Rose", "last_name": "Walker", "role": "aide-soignant", "activity_rate": 60, "can_do_night": True, "can_do_weekend": True, "preferred_shifts": ["Nuit"]},
+    {"first_name": "Gabriel", "last_name": "Jackson", "role": "aide-soignant", "activity_rate": 100, "working_days": WEEKDAYS[:5]},
+    {"first_name": "Ines", "last_name": "White", "role": "aide-soignant", "activity_rate": 80, "working_days": WEEKDAYS[:4]},
+    {"first_name": "Arthur", "last_name": "Harris", "role": "aide-soignant", "activity_rate": 60, "working_days": ["lundi", "mercredi", "vendredi"]},
+    {"first_name": "Lina", "last_name": "Clark", "role": "aide-soignant", "activity_rate": 100, "working_days": WEEKDAYS[:5]},
+    {"first_name": "Adam", "last_name": "Lewis", "role": "aide-soignant", "activity_rate": 40, "working_days": ["lundi", "vendredi"]},
+    {"first_name": "Rose", "last_name": "Walker", "role": "aide-soignant", "activity_rate": 20, "working_days": ["jeudi"]},
 ]
 
 for emp in employees_data:
@@ -84,17 +87,17 @@ print(f"  -> {emp_count} employees")
 print("Seeding coverage requirements...")
 coverage_data = [
     # Matin
-    {"shift_type_id": shift_map["Matin"], "day_type": "weekday", "min_employees": 4, "required_roles": [{"role": "infirmier", "min": 2}]},
-    {"shift_type_id": shift_map["Matin"], "day_type": "saturday", "min_employees": 3, "required_roles": [{"role": "infirmier", "min": 1}]},
-    {"shift_type_id": shift_map["Matin"], "day_type": "sunday", "min_employees": 3, "required_roles": [{"role": "infirmier", "min": 1}]},
-    # Après-midi
-    {"shift_type_id": shift_map["Après-midi"], "day_type": "weekday", "min_employees": 4, "required_roles": [{"role": "infirmier", "min": 2}]},
-    {"shift_type_id": shift_map["Après-midi"], "day_type": "saturday", "min_employees": 3, "required_roles": [{"role": "infirmier", "min": 1}]},
-    {"shift_type_id": shift_map["Après-midi"], "day_type": "sunday", "min_employees": 3, "required_roles": [{"role": "infirmier", "min": 1}]},
+    {"shift_type_id": shift_map["Matin"], "day_type": "weekday", "min_infirmier": 2, "min_assc": 1, "min_aide_soignant": 1},
+    {"shift_type_id": shift_map["Matin"], "day_type": "saturday", "min_infirmier": 1, "min_assc": 1, "min_aide_soignant": 1},
+    {"shift_type_id": shift_map["Matin"], "day_type": "sunday", "min_infirmier": 1, "min_assc": 1, "min_aide_soignant": 1},
+    # Apres-midi
+    {"shift_type_id": shift_map["Apres-midi"], "day_type": "weekday", "min_infirmier": 2, "min_assc": 1, "min_aide_soignant": 1},
+    {"shift_type_id": shift_map["Apres-midi"], "day_type": "saturday", "min_infirmier": 1, "min_assc": 1, "min_aide_soignant": 1},
+    {"shift_type_id": shift_map["Apres-midi"], "day_type": "sunday", "min_infirmier": 1, "min_assc": 1, "min_aide_soignant": 1},
     # Nuit
-    {"shift_type_id": shift_map["Nuit"], "day_type": "weekday", "min_employees": 2, "required_roles": [{"role": "infirmier", "min": 1}]},
-    {"shift_type_id": shift_map["Nuit"], "day_type": "saturday", "min_employees": 2, "required_roles": [{"role": "infirmier", "min": 1}]},
-    {"shift_type_id": shift_map["Nuit"], "day_type": "sunday", "min_employees": 2, "required_roles": [{"role": "infirmier", "min": 1}]},
+    {"shift_type_id": shift_map["Nuit"], "day_type": "weekday", "min_infirmier": 1, "min_assc": 1, "min_aide_soignant": 0},
+    {"shift_type_id": shift_map["Nuit"], "day_type": "saturday", "min_infirmier": 1, "min_assc": 1, "min_aide_soignant": 0},
+    {"shift_type_id": shift_map["Nuit"], "day_type": "sunday", "min_infirmier": 1, "min_assc": 1, "min_aide_soignant": 0},
 ]
 
 for cov in coverage_data:
@@ -115,7 +118,7 @@ emp_ids = [e["id"] for e in sb.table("employees").select("id").order("last_name"
 if len(emp_ids) >= 5:
     sample_absences = [
         {"employee_id": emp_ids[0], "date_start": "2026-03-10", "date_end": "2026-03-17", "type": "vacances"},
-        {"employee_id": emp_ids[3], "date_start": "2026-03-15", "date_end": "2026-03-16", "type": "congé"},
+        {"employee_id": emp_ids[3], "date_start": "2026-03-15", "date_end": "2026-03-16", "type": "conge"},
         {"employee_id": emp_ids[4], "date_start": "2026-03-20", "date_end": "2026-03-25", "type": "maladie"},
     ]
     for absence in sample_absences:

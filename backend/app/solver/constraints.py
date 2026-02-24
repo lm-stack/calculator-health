@@ -32,10 +32,8 @@ def add_coverage_constraints(model, shifts_var, employees, shift_types, days, co
                 >= cov.min_employees
             )
 
-            # Required roles
-            for role_req in cov.required_roles:
-                role_name = role_req.get("role", "")
-                min_count = role_req.get("min", 1)
+            # Per-role minimums
+            for role_name, min_count in cov.role_minimums.items():
                 eligible = [e_idx for e_idx, emp in enumerate(employees)
                             if emp.role == role_name]
                 if eligible:
@@ -110,24 +108,19 @@ def add_absence_constraints(model, shifts_var, employees, shift_types, days, abs
                     model.Add(shifts_var[(e_idx, d_idx, s_idx)] == 0)
 
 
-def add_night_capability(model, shifts_var, employees, shift_types, days):
-    """Only employees with can_do_night can work night shifts."""
-    night_indices = [s_idx for s_idx, s in enumerate(shift_types) if s.is_night]
+WEEKDAY_TO_FRENCH = {
+    0: "lundi", 1: "mardi", 2: "mercredi", 3: "jeudi",
+    4: "vendredi", 5: "samedi", 6: "dimanche",
+}
+
+
+def add_working_days_constraint(model, shifts_var, employees, shift_types, days):
+    """Employees can only work on their declared working days."""
     for e_idx, emp in enumerate(employees):
-        if not emp.can_do_night:
-            for d_idx in range(len(days)):
-                for s_idx in night_indices:
+        for d_idx, day in enumerate(days):
+            if WEEKDAY_TO_FRENCH[day.weekday()] not in emp.working_days:
+                for s_idx in range(len(shift_types)):
                     model.Add(shifts_var[(e_idx, d_idx, s_idx)] == 0)
-
-
-def add_weekend_capability(model, shifts_var, employees, shift_types, days):
-    """Only employees with can_do_weekend can work weekends."""
-    for e_idx, emp in enumerate(employees):
-        if not emp.can_do_weekend:
-            for d_idx, day in enumerate(days):
-                if day.weekday() >= 5:  # Saturday=5, Sunday=6
-                    for s_idx in range(len(shift_types)):
-                        model.Add(shifts_var[(e_idx, d_idx, s_idx)] == 0)
 
 
 def add_weekend_rest(model, shifts_var, employees, shift_types, days, min_free_weekends=1):

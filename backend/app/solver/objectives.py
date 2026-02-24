@@ -30,25 +30,6 @@ def add_shift_regularity_objective(model, shifts_var, employees, shift_types, da
     return bonus_vars, weight
 
 
-def add_preference_objective(model, shifts_var, employees, shift_types, days, weight=5):
-    """Respect employee shift preferences when possible."""
-    bonus_vars = []
-
-    shift_name_to_idx = {s.name: i for i, s in enumerate(shift_types)}
-
-    for e_idx, emp in enumerate(employees):
-        if not emp.preferred_shifts:
-            continue
-        for pref in emp.preferred_shifts:
-            s_idx = shift_name_to_idx.get(pref)
-            if s_idx is None:
-                continue
-            for d_idx in range(len(days)):
-                bonus_vars.append(shifts_var[(e_idx, d_idx, s_idx)])
-
-    return bonus_vars, weight
-
-
 def add_night_weekend_equity_objective(model, shifts_var, employees, shift_types, days, weight=8):
     """Distribute night and weekend shifts equitably.
 
@@ -63,7 +44,7 @@ def add_night_weekend_equity_objective(model, shifts_var, employees, shift_types
     # Count undesirable shifts per employee
     counts = []
     eligible = [e_idx for e_idx, emp in enumerate(employees)
-                if emp.can_do_night or emp.can_do_weekend]
+                if "samedi" in emp.working_days or "dimanche" in emp.working_days]
 
     if len(eligible) < 2:
         return [], 0

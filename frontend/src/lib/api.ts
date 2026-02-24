@@ -27,6 +27,8 @@ export const deleteEmployee = (id: string) =>
 export const getShiftTypes = () => request<ShiftType[]>("/api/shifts");
 export const createShiftType = (data: ShiftTypeCreate) =>
   request<ShiftType>("/api/shifts", { method: "POST", body: JSON.stringify(data) });
+export const updateShiftType = (id: string, data: Partial<ShiftTypeCreate>) =>
+  request<ShiftType>(`/api/shifts/${id}`, { method: "PUT", body: JSON.stringify(data) });
 export const deleteShiftType = (id: string) =>
   request<void>(`/api/shifts/${id}`, { method: "DELETE" });
 
@@ -65,9 +67,7 @@ export interface Employee {
   last_name: string;
   role: string;
   activity_rate: number;
-  can_do_night: boolean;
-  can_do_weekend: boolean;
-  preferred_shifts: string[];
+  working_days: string[];
   created_at: string;
 }
 
@@ -76,9 +76,7 @@ export interface EmployeeCreate {
   last_name: string;
   role: string;
   activity_rate: number;
-  can_do_night: boolean;
-  can_do_weekend: boolean;
-  preferred_shifts: string[];
+  working_days: string[];
 }
 
 export interface ShiftType {
@@ -87,6 +85,7 @@ export interface ShiftType {
   start_time: string;
   end_time: string;
   duration_hours: number;
+  short_label: string;
   created_at: string;
 }
 
@@ -95,22 +94,25 @@ export interface ShiftTypeCreate {
   start_time: string;
   end_time: string;
   duration_hours: number;
+  short_label: string;
 }
 
 export interface CoverageRequirement {
   id: string;
   shift_type_id: string;
   day_type: string;
-  min_employees: number;
-  required_roles: { role: string; min: number }[];
+  min_infirmier: number;
+  min_assc: number;
+  min_aide_soignant: number;
   shift_types?: { name: string };
 }
 
 export interface CoverageCreate {
   shift_type_id: string;
   day_type: string;
-  min_employees: number;
-  required_roles: { role: string; min: number }[];
+  min_infirmier: number;
+  min_assc: number;
+  min_aide_soignant: number;
 }
 
 export interface Absence {
@@ -146,7 +148,7 @@ export interface ScheduleAssignment {
   date: string;
   is_locked: boolean;
   employees?: { first_name: string; last_name: string; role: string };
-  shift_types?: { name: string; start_time: string; end_time: string };
+  shift_types?: { name: string; start_time: string; end_time: string; short_label: string };
 }
 
 export interface ScheduleDetail extends Schedule {

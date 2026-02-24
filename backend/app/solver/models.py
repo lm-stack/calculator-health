@@ -9,9 +9,7 @@ class Employee:
     last_name: str
     role: str
     activity_rate: int
-    can_do_night: bool
-    can_do_weekend: bool
-    preferred_shifts: list = field(default_factory=list)
+    working_days: list = field(default_factory=lambda: ["lundi", "mardi", "mercredi", "jeudi", "vendredi"])
 
     @property
     def max_weekly_hours(self) -> float:
@@ -28,7 +26,10 @@ class ShiftType:
 
     @property
     def is_night(self) -> bool:
-        return self.name.lower() in ("nuit", "night")
+        """Detect night shift by schedule: starts >= 20h or crosses midnight."""
+        start = self.start_hour()
+        end = self.end_hour()
+        return start >= 20 or end < start
 
     def start_hour(self) -> float:
         parts = self.start_time.split(":")
@@ -43,8 +44,24 @@ class ShiftType:
 class CoverageRequirement:
     shift_type_id: str
     day_type: str  # weekday, saturday, sunday
-    min_employees: int
-    required_roles: list = field(default_factory=list)
+    min_infirmier: int = 0
+    min_assc: int = 0
+    min_aide_soignant: int = 0
+
+    @property
+    def min_employees(self) -> int:
+        """Total minimum = sum of all role minimums."""
+        return self.min_infirmier + self.min_assc + self.min_aide_soignant
+
+    @property
+    def role_minimums(self) -> dict[str, int]:
+        """Dict of role -> minimum count (only non-zero)."""
+        mins = {
+            "infirmier": self.min_infirmier,
+            "assc": self.min_assc,
+            "aide-soignant": self.min_aide_soignant,
+        }
+        return {k: v for k, v in mins.items() if v > 0}
 
 
 @dataclass

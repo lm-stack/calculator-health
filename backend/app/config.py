@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_key: str = ""
     supabase_service_key: str = ""
-    backend_cors_origins: str = "http://localhost:3000"
+    backend_cors_origins: str = "http://localhost:3000,http://localhost:3001,http://localhost:3002"
 
     class Config:
         env_file = ".env"

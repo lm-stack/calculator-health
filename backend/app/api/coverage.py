@@ -9,13 +9,15 @@ router = APIRouter()
 class CoverageCreate(BaseModel):
     shift_type_id: str
     day_type: str  # weekday, saturday, sunday
-    min_employees: int = 1
-    required_roles: list = []
+    min_infirmier: int = 0
+    min_assc: int = 0
+    min_aide_soignant: int = 0
 
 
 class CoverageUpdate(BaseModel):
-    min_employees: Optional[int] = None
-    required_roles: Optional[list] = None
+    min_infirmier: Optional[int] = None
+    min_assc: Optional[int] = None
+    min_aide_soignant: Optional[int] = None
 
 
 @router.get("")

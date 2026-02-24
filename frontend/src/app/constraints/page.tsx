@@ -28,10 +28,10 @@ export default function ConstraintsPage() {
     min_rest_hours: "Repos minimum entre shifts",
     max_weekly_hours: "Heures hebdomadaires max",
     respect_absences: "Respecter les absences",
-    required_roles: "Rôles requis par créneau",
+    min_per_role: "Minimums par rôle",
+    weekend_work: "Travail le week-end",
     weekend_rest: "Repos week-end garanti",
     shift_regularity: "Régularité des horaires",
-    respect_preferences: "Préférences de shifts",
     night_weekend_equity: "Équité nuits / week-ends",
   };
 
